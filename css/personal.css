@@ -1,0 +1,8 @@
+#home-image {
+  background:url(http://imgs.xkcd.com/comics/keyboards_are_disgusting.png) no-repeat center center;
+  height:216px;
+  width:740px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}

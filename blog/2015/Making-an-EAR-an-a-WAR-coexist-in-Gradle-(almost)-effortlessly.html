@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Making an EAR an a WAR coexist in Gradle (almost) effortlessly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <link href="../../css/personal.css" rel="stylesheet">
+    <!-- Le styles -->
+    <link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <!-- highlightjs -->
+    <link href="../../css/default.css" rel="stylesheet">
+
+    <!--
+    <link href="../../css/prettify.css" rel="stylesheet">
+-->
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../favicon.ico">
+  </head>
+  <body onload="prettyPrint()">
+    <div id="wrap">
+
+	<!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">Mashing the Keyboard</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="../../index.html">Home</a></li>
+            <li><a href="../../about.html">About</a></li>
+						<li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tags<b class="caret"></b></a>
+              <ul class="dropdown-menu">
+									<li><a href="../../tags/JavaEE.html">JavaEE</a></li>
+									<li><a href="../../tags/Gradle.html">Gradle</a></li>
+									<li><a href="../../tags/Building.html">Building</a></li>
+              </ul>
+            </li>
+						<li><a href="../../archive.html">Archive</a></p></li>
+            <li><a href="../../feed.xml">Subscribe</a></li>
+						<!--
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>
+              </ul>
+            </li>
+						-->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    <div class="container">
+
+	<div class="page-header">
+		<h1>Making an EAR an a WAR coexist in Gradle (almost) effortlessly</h1>
+	</div>
+
+	<p><em>13 agosto 2015</em></p>
+
+	<a href="https://twitter.com/share" class="twitter-share-button" data-url="https://robertpanzer.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html">Tweet</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+	<g:plusone href="https://abelsromero.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html"></g:plusone>
+
+	<script type="IN/Share" data-url="https://abelsromero.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html" data-counter="right"></script>
+
+	<div class="fb-like" data-href="https://abelsromero.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+
+	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Building an EAR from a already existing WAR project can require some boilerplate configuration files. Here I present a way to get it in a simple and clean way using Gradle.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s is not uncommon that at some point you need to deploy your web applications as EAR. If you use Maven, you have to create another project of type ear, but with Gradle there&#8217;s a more elegant solution.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+To make things clear, this is not a Gradle vs Maven post, or any sort of Maven rant. I just use Maven as example, <em>I love them both the same</em>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="some_context_an_ear_now">Some context&#8230;&#8203;an EAR now?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In the time of lightweight containers and applications seems that big packages are dead.</p>
+</div>
+<div class="paragraph">
+<p>But like or not, from time to time you have to deal with EARs, in my case, mainly for two reasons:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Combine related applications with lots of shared libraries.</p>
+</li>
+<li>
+<p>Wrap a WAR to add additional configurations for the customer&#8217;s Applications Servers (e.g. setting the context root or some classpath tunning or).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For me, 90%  of times it&#8217;s the second, last time, just recently with WebSphere.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="it_shouldn_t_be_that_hard">It shouldn&#8217;t be that hard</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Wrapping a WAR should not be hard, it&#8217;s just adding some extra XML and pack the file, right?
+Truth is that it&#8217;s not so simple with the most common tools.</p>
+</div>
+<div class="paragraph">
+<p>In the case of <strong>Maven</strong>, the more reasonable solution is creating another project&#8230;&#8203;if you are lucky, you&#8217;ll already have a parent project&#8230;&#8203;if not, creating an EAR will imply:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Creating a parent project</p>
+</li>
+<li>
+<p>Updating your WAR project</p>
+</li>
+<li>
+<p>Creating the new EAR project</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Some may argue that there are other options, you can use profiles or skip the parent, but in the end those solutions are hard to maintain.</p>
+</div>
+<div class="paragraph">
+<p>On the other hand, <strong>Gradle</strong> offers a solution that does not require creating additional files, just with some additional lines to your current build script you are ready to go.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="the_basic_gradle_build">The Basic Gradle Build</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The first thing to do is create a new project, but <strong>embedded</strong> in the current build.
+Just add the following lines to your current Gradle files.</p>
+</div>
+<div class="listingblock">
+<div class="title">build.gradle</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-gradle" data-lang="gradle">project(":earproject") {
+  apply plugin: 'ear'
+
+  dependencies {
+    deploy project(path:":", configuration:'archives') <b class="conum">(1)</b>
+  }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Use ":" to reference the rootProject (the WAR) and set it to use the 'archives' configuration added by the <a href="https://docs.gradle.org/current/userguide/war_plugin.html">war plugin</a>.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+<code>configuration:'archives'</code> is what makes the trick, without it, the EAR will include the jar artifact of the rootProject.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">settings.gradle</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy" data-lang="groovy">include 'earproject' <b class="conum">(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Standard Gradle project include</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>That&#8217;s pretty much it, with that we can just run <code>gradle clean build</code> to see that it works.
+The clean task is optional, but I always like to make sure builds run from zero.</p>
+</div>
+<div class="paragraph">
+<p>This is what you should get.</p>
+</div>
+<div class="listingblock">
+<div class="title">'gradle clean build' output</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-ruby" data-lang="ruby">:clean
+:earproject:clean
+:compileJava
+:processResources
+:classes
+:war
+:assemble
+:compileTestJava UP-TO-DATE
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:test UP-TO-DATE
+:check UP-TO-DATE
+:build
+:earproject:ear
+:earproject:assemble
+:earproject:check UP-TO-DATE
+:earproject:build</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>With this, you can work like you would with any Web Application.</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Use your favourite IDE.</strong></p>
+</li>
+<li>
+<p><strong>Deploy directly on Tomcat or your favorite web container.</strong></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="improving_your_build">Improving your build</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This configuration is enough but it can be easily improved with a few changes.</p>
+</div>
+<div class="sect2">
+<h3 id="adding_a_custom_deployment_descriptor">Adding a custom Deployment Descriptor</h3>
+<div class="paragraph">
+<p>As explained in the <a href="https://docs.gradle.org/current/userguide/ear_plugin.html">reference documentation</a> you can create a minimum deployment descriptor with the following snippet.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-gradle" data-lang="gradle">ear {
+  deploymentDescriptor {
+    applicationName = "YOUR APP NAME"
+    displayName = "YOUR APP DISPLAY NAME"
+    webModule(rootProject.configurations['archives'].artifacts[0].file.name, "/YOUR_CONTEXT_ROOT") <b class="conum">(1)</b>
+  }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Add your WAR as a <code>webModule</code> and reference the <code>archives</code> artifact to ensure the name is always the same</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using_the_same_output_folder_and_project_name">Using the same output folder and project name</h3>
+<div class="paragraph">
+<p>Right now the EAR is generated under the path <code>earproject/build</code> as <code>earproject.ear</code>.</p>
+</div>
+<div class="paragraph">
+<p>If we want to generate it with the same name and location of the WAR, just add this.</p>
+</div>
+<div class="listingblock">
+<div class="title">build.gradle</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-gradle" data-lang="gradle">project(":earproject") {
+  apply plugin: 'ear'
+
+  project.version = rootProject.version   <b class="conum">(1)</b>
+  project.buildDir = rootProject.buildDir <b class="conum">(2)</b>
+
+  ear {
+    baseName = rootProject.name           <b class="conum">(3)</b>
+    deploymentDescriptor {
+    . . .
+  }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Set the same version as the rootProject</p>
+</li>
+<li>
+<p>Set the same output directory as the rootProject</p>
+</li>
+<li>
+<p>Set the <em>baseName</em> of the EAR file to be the same as the WAR</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p><strong>With all these changes now you have a seamlessly way to convert your Web Project into an EAR when you need to.</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Oh! And if you already have a project running with Maven, well you can always try this:</strong></p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ gradle init &amp;&amp; mv gradlew mvn</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><em>I hope it helps!!</em></p>
+</div>
+<div class="paragraph">
+<p><em>Abel</em></p>
+</div>
+<div class="paragraph">
+<p><em>Currently listening to "Odyssey" by Kyuss, from "Welcome to Sky Valley"</em></p>
+</div>
+</div>
+</div>
+</div></p>
+
+		<div id="disqus_thread"></div>
+		<script type="text/javascript">
+				/* * * CONFIGURATION VARIABLES * * */
+				var disqus_shortname = 'abelcodeblog';
+
+				/* * * DON'T EDIT BELOW THIS LINE * * */
+				(function() {
+						var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+						dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+						(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				})();
+		</script>
+		<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+	<hr />
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <div id="footer">
+      <div class="container">
+        <p class="muted credit">&copy; 2015 | Mixed with <a href="http://getbootstrap.com/">Bootstrap v3.1.1</a> | Baked with <a href="http://jbake.org">JBake v2.4.0</a></p>
+      </div>
+    </div>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../../js/jquery-1.11.1.min.js"></script>
+    <script src="../../js/bootstrap.min.js"></script>
+		<script src="../../js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<!--
+    <script src="../../js/prettify.js"></script>
+    -->
+  </body>
+</html>

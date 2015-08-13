@@ -1,0 +1,6 @@
+/assets
+/content
+/templates
+/output
+jbake.*
+.project
