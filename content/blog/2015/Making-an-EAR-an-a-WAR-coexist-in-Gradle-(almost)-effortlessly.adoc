@@ -1,0 +1,164 @@
+= Making an EAR an a WAR coexist in Gradle (almost) effortlessly
+Abel Salgado Romero <abelromero@gmail.com>
+2015-08-13
+:jbake-type: post
+:jbake-status: published
+:jbake-disqus: true
+:jbake-tags: Gradle, JavaEE, Building
+:linenums:
+:idprefix:
+:source-indent: 0
+:preamble: Building an EAR from a already existing WAR project can require some boilerplate configuration files. Here I present a way to get it in a simple and clean way using Gradle.
+
+{preamble}
+
+It's is not uncommon that at some point you need to deploy your web applications as EAR. If you use Maven, you have to create another project of type ear, but with Gradle there's a more elegant solution.
+
+NOTE: To make things clear, this is not a Gradle vs Maven post, or any sort of Maven rant. I just use Maven as example, _I love them both the same_.
+
+== Some context...an EAR now?
+
+In the time of lightweight containers and applications seems that big packages are dead.
+
+But like or not, from time to time you have to deal with EARs, in my case, mainly for two reasons:
+
+* Combine related applications with lots of shared libraries.
+* Wrap a WAR to add additional configurations for the customer's Applications Servers (e.g. setting the context root or some classpath tunning or).
+
+For me, 90%  of times it's the second, last time, just recently with WebSphere.
+
+
+== It shouldn't be that hard
+
+Wrapping a WAR should not be hard, it's just adding some extra XML and pack the file, right?
+Truth is that it's not so simple with the most common tools.
+
+In the case of *Maven*, the more reasonable solution is creating another project...if you are lucky, you'll already have a parent project...if not, creating an EAR will imply:
+
+* Creating a parent project
+* Updating your WAR project
+* Creating the new EAR project
+
+Some may argue that there are other options, you can use profiles or skip the parent, but in the end those solutions are hard to maintain.
+
+On the other hand, *Gradle* offers a solution that does not require creating additional files, just with some additional lines to your current build script you are ready to go.
+
+== The Basic Gradle Build
+
+The first thing to do is create a new project, but *embedded* in the current build.
+Just add the following lines to your current Gradle files.
+
+[source,gradle,indent={source-indent}]
+.build.gradle
+----
+project(":earproject") {
+  apply plugin: 'ear'
+
+  dependencies {
+    deploy project(path:":", configuration:'archives') // <1>
+  }
+}
+----
+
+
+<1> Use ":" to reference the rootProject (the WAR) and set it to use the 'archives' configuration added by the https://docs.gradle.org/current/userguide/war_plugin.html[war plugin].
+
+IMPORTANT: `configuration:'archives'` is what makes the trick, without it, the EAR will include the jar artifact of the rootProject.
+
+[source,groovy,indent={source-indent}]
+.settings.gradle
+----
+include 'earproject' // <1>
+----
+<1> Standard Gradle project include
+
+
+That's pretty much it, with that we can just run `gradle clean build` to see that it works.
+The clean task is optional, but I always like to make sure builds run from zero.
+
+This is what you should get.
+
+[source,ruby,indent={source-indent}]
+.pass:['gradle clean build'] output
+----
+:clean
+:earproject:clean
+:compileJava
+:processResources
+:classes
+:war
+:assemble
+:compileTestJava UP-TO-DATE
+:processTestResources UP-TO-DATE
+:testClasses UP-TO-DATE
+:test UP-TO-DATE
+:check UP-TO-DATE
+:build
+:earproject:ear
+:earproject:assemble
+:earproject:check UP-TO-DATE
+:earproject:build
+----
+
+*With this, you can work like you would with any Web Application.*
+
+* *Use your favourite IDE.*
+* *Deploy directly on Tomcat or your favorite web container.*
+
+== Improving your build
+
+This configuration is enough but it can be easily improved with a few changes.
+
+=== Adding a custom Deployment Descriptor
+
+As explained in the https://docs.gradle.org/current/userguide/ear_plugin.html[reference documentation] you can create a minimum deployment descriptor with the following snippet.
+
+[source,gradle,indent={source-indent}]
+----
+ear {
+  deploymentDescriptor {
+    applicationName = "YOUR APP NAME"
+    displayName = "YOUR APP DISPLAY NAME"
+    webModule(rootProject.configurations['archives'].artifacts[0].file.name, "/YOUR_CONTEXT_ROOT") // <1>
+  }
+}
+----
+<1> Add your WAR as a `webModule` and reference the `archives` artifact to ensure the name is always the same
+
+=== Using the same output folder and project name
+
+Right now the EAR is generated under the path `earproject/build` as `earproject.ear`.
+
+If we want to generate it with the same name and location of the WAR, just add this.
+
+[source,gradle,indent={source-indent}]
+.build.gradle
+----
+project(":earproject") {
+  apply plugin: 'ear'
+
+  project.version = rootProject.version   // <1>
+  project.buildDir = rootProject.buildDir // <2>
+
+  ear {
+    baseName = rootProject.name           // <3>
+    deploymentDescriptor {
+    . . .
+  }
+----
+<1> Set the same version as the rootProject
+<2> Set the same output directory as the rootProject
+<3> Set the _baseName_ of the EAR file to be the same as the WAR
+
+*With all these changes now you have a seamlessly way to convert your Web Project into an EAR when you need to.*
+
+*Oh! And if you already have a project running with Maven, well you can always try this:*
+
+ $ gradle init && mv gradlew mvn
+
+
+_I hope it helps!!_
+
+_Abel_
+
+_Currently listening to "Odyssey" by Kyuss, from "Welcome to Sky Valley"_

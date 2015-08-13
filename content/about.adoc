@@ -1,0 +1,18 @@
+title=About Me
+date=2015-08-13
+type=page
+status=published
+~~~~~~
+
+image::/images/avatar00.png[]
+
+I'd like to say that l consider myself a Software Engineer, passionate about coding, open source and many things in the Java ecosystem, especially if it’s about Groovy.
+If you were to meet me, I’d be probably just cloning some github repo for fun, playing with some language, attempting to fix something or reading some article.
+Always trying to learn new things.
+
+Everything you can find here is my personal opinion and does not necessarily reflect the opinions of my employer.
+
++++<span style="width:10px;">&nbsp;</span>+++
++++<a href="https://twitter.com/abelsromero" class="twitter-follow-button" data-show-count="false">Follow @abelsromero</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>+++
++++<span style="width:10px;">&nbsp;</span>+++
++++<iframe src="https://ghbtns.com/github-btn.html?user=abelsromero&type=follow" frameborder="0" scrolling="0" width="170px" height="20px"></iframe>+++
