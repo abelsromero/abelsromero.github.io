@@ -9,6 +9,10 @@ Abel Salgado Romero <abelromero@gmail.com>
 :idprefix:
 :source-indent: 0
 :antora-version: 2.3
+:icons: font
+:preample: sssssss
+
+{preample}
 
 https://antora.org/[Antora] is a great documentation building solution for https://asciidoctor.org/[Asciidoctor].
 Amongst its greatest innovations are the standardization of the different resources to build really good docs,
