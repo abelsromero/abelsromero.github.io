@@ -9,7 +9,6 @@ Abel Salgado Romero <abelromero@gmail.com>
 :idprefix:
 :source-indent: 0
 :preamble: Building an EAR from a already existing WAR project can require some boilerplate configuration files. Here I present a way to get it in a simple and clean way using Gradle.
-:icons: font
 
 {preamble}
 

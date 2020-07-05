@@ -1,6 +1,6 @@
 = Building Antora with Maven
 Abel Salgado Romero <abelromero@gmail.com>
-2020-07-04
+2020-07-06
 :jbake-type: post
 :jbake-status: published
 :jbake-disqus: true
@@ -9,10 +9,7 @@ Abel Salgado Romero <abelromero@gmail.com>
 :idprefix:
 :source-indent: 0
 :antora-version: 2.3
-:icons: font
-:preample: sssssss
-
-{preample}
+:preamble: A simple guide to build Antora with Maven for those unfamiliar with JavaSccript tools.
 
 https://antora.org/[Antora] is a great documentation building solution for https://asciidoctor.org/[Asciidoctor].
 Amongst its greatest innovations are the standardization of the different resources to build really good docs,
@@ -43,10 +40,10 @@ I hope after getting your feet wet, you'll give it a try using the stardard tool
 
 The process is split in 2 main parts:
 
-. Firstly, bootstrapping the project from zero.
-. Secondly, configuring maven to install Node and the antora packages.
+. Bootstrapping the project from zero.
+. Configuring maven to install Node and the antora packages.
 _packages_ is Node terminology for modules or libraries in Java world.
-. Finally, getting Maven to run the antora cli to build the site.
+. Getting Maven to run the antora cli to build the site.
 
 == Bootstrapping the project
 
