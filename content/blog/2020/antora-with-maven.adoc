@@ -1,0 +1,293 @@
+= Building Antora with Maven
+Abel Salgado Romero <abelromero@gmail.com>
+2020-07-04
+:jbake-type: post
+:jbake-status: published
+:jbake-disqus: true
+:jbake-tags: Asciidoctor, Antora, Maven
+:linenums:
+:idprefix:
+:source-indent: 0
+:antora-version: 2.3
+
+https://antora.org/[Antora] is a great documentation building solution for https://asciidoctor.org/[Asciidoctor].
+Amongst its greatest innovations are the standardization of the different resources to build really good docs,
+and the orchestration of multiple independent repositories into a single published site.
+
+However, it's fully implements in JavaScript.
+This is not a bad thing at all, but may present an initial barrier for those used to enjoying Asciidoctor in Ruby or Java.
+This guide will show how to set up a simple Maven build an Antora site.
+It's in fact, an alternative way to run the official https://docs.antora.org/antora/{antora-version}/install-and-run-quickstart/[install-and-run-quickstart].
+Spoiler alert, it's just using a couple of popular Maven plugins ;)
+
+NOTE: Full example can be found here https://github.com/abelsromero/blog-antora-with-maven.
+
+== Antora with Maven...why?
+
+Antora itself is implemented in JavaScript and uses https://nodejs.org/[Node.js] to run.
+But we don't really need to know about it, https://docs.antora.org/antora/{antora-version}/install/install-antora/[installation] is easy and normally we interact with Antora's CLI.
+
+However, if like me...you come from a Java background and don't like installing tools globally, this short guide shows how to build an Antora site with existing https://maven.apache.org/[Maven] tools.
+
+This guide does not cover all use cases, at the end there's a section of further work.
+But it offers a quickstart.
+It also offers a self-contained way to setup a reproducible environment and build that could be used for CI environments.
+What I like to call "just clone & package" processes.
+
+The goal is not retract from using plain Antora but making things easier to start.
+I hope after getting your feet wet, you'll give it a try using the stardard toolset.
+
+The process is split in 2 main parts:
+
+. Firstly, bootstrapping the project from zero.
+. Secondly, configuring maven to install Node and the antora packages.
+_packages_ is Node terminology for modules or libraries in Java world.
+. Finally, getting Maven to run the antora cli to build the site.
+
+== Bootstrapping the project
+
+This guide uses the https://docs.antora.org/antora/{antora-version}/install-and-run-quickstart/[install-and-run-quickstart].
+If we review it we'll see that the example Antora project is composed of 3 repos
+
+* The playbook describes where the contents are located, the UI theme and main options.
+* 2 content repos with the documentation sources to be converted into the site
+  ** https://gitlab.com/antora/demo/demo-component-a
+  ** https://gitlab.com/antora/demo/demo-component-b.git
+
+In order to build the site we only need to create a maven project and add the playbook file.
+
+The quickest way is using a maven `maven-archetype-quickstart` as described in http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html[maven-in-five-minutes] guide.
+
+ $ mvn archetype:generate -DgroupId=org.antora.maven -DartifactId=my-antora-site -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false
+
+Once done, copy the example playbook from https://gitlab.com/antora/demo/docs-site/-/blob/master/antora-playbook.yml.
+
+[source,yaml]
+----
+site:
+  title: Antora Demo Site
+  # the 404 page and sitemap files only get generated when the url property is set
+  url: https://antora.gitlab.io/demo/docs-site
+  start_page: component-b::index.adoc
+content:
+  sources:
+    - url: https://gitlab.com/antora/demo/demo-component-a.git
+      branches: master
+      # setting edit_url to false disables the Edit this Page link for any page that originates from this repository
+      # the same thing can be achieved by adding empty credentials (i.e., @) in front of the domain in the URL
+      edit_url: false
+    - url: https://gitlab.com/antora/demo/demo-component-b.git
+      branches: [v2.0, v1.0]
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+----
+
+And we are done for the first step!
+
+== Installing Node, npm and Antora
+
+Now we need the local Node installation and the dependencies.
+That's extremely easy using https://github.com/eirslett/frontend-maven-plugin[frontend-maven-plugin].
+This allows running several Javascript tools from Maven, handling also the installation of such tools as well.
+
+All is done inside your project folder, so no need to install anything in your machine.
+And when you are done, you can delete it.
+
+To setup the installation just add the plugin with two executions.
+One, to install Node and npm versions you want to use (Antora works better with latest LTS).
+THe other, to install Antora and its dependencies.
+
+It's important to keep the order in the pom.xml since both executions run in the same http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#lifecycle-reference[maven phase].
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.github.eirslett</groupId>
+  <artifactId>frontend-maven-plugin</artifactId>
+  <version>1.10.0</version>
+  <executions>
+    <execution>
+      <id>install node and npm</id>
+      <goals>
+        <goal>install-node-and-npm</goal>
+      </goals>
+      <phase>initialize</phase>
+      <configuration>
+        <nodeVersion>${node.version}</nodeVersion>  <!--1-->
+        <npmVersion>${npm.version}</npmVersion>     <!--2-->
+      </configuration>
+    </execution>
+    <execution>
+      <id>npm install antora</id>
+      <goals>
+        <goal>npm</goal>
+      </goals>
+      <phase>initialize</phase>
+      <configuration>
+        <arguments>install @antora/cli@${antora.version} @antora/site-generator-default@${antora.version}</arguments> <!--3-->
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+<1> Fixed Node version as maven property.
+<2> Fixed npm version as maven property.
+A conventional Node installation includes npm, but here it's required to it separately.
+<3> Npm command to install Antora and the default site generator (aka. style).
+To install the latest version leave it as `install @antora/cli @antora/site-generator-default`
+
+Alternatively, for the dependencies installation we can create a npm https://docs.npmjs.com/files/package.json[packages.json descriptor] and set `<arguments>install</arguments>`.
+But this makes it harder to keep all configuration in a single file.
+
+[IMPORTANT]
+====
+After a first installation, the file `package-lock.json` will be created with the exact version of all dependencies (direct and transitive).
+For the case of Antora is safe to ignore it and not pushing it into your git repo.
+====
+
+Finally, to have a controlled build we can define all versions as properties.
+
+[source,xml]
+----
+<properties>
+  <node.version>v12.18.2</node.version>
+  <npm.version>6.14.5</npm.version>
+  <antora.version>2.3.3</antora.version>
+</properties>
+----
+
+== Generating the site
+
+The only thing remaining is building the site.
+In a normal https://docs.antora.org/antora/2.3/install/install-antora/#install-dir[installation] here would just run Antora's cli.
+
+ $ antora antora-playbook.yml
+
+Here, we can use the https://www.mojohaus.org/exec-maven-plugin/[exec-maven-plugin] to run the same command.
+
+[source, xml]
+----
+<plugin>
+  <groupId>org.codehaus.mojo</groupId>
+  <artifactId>exec-maven-plugin</artifactId>
+  <version>3.0.0</version>
+  <executions>
+    <execution>
+      <goals>
+        <goal>exec</goal>
+      </goals>
+      <phase>compile</phase>
+      <configuration>
+        <!-- If we don't want to depend on default node installation path we can use -->
+        <executable>node/node</executable> <!--1-->
+        <arguments>
+          <argument>node_modules/.bin/antora</argument> <!--2-->
+          <argument>antora-playbook.yml</argument> <!--3-->
+        </arguments>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+<1> _node_ binary is installed by default in _node_ folder.
+To change that, we could use a maven property and set `<installDirectory>` during the installation execution.
+<2> Packages with executable commands like antora are available under _.bin_ directory of the packages installation folder.
+<3> Antora playbook descriptor file located at the root of the project.
+
+With that, we complete the configuration!
+To build the site we only run
+
+ $ mvn compile
+
+== Some extras
+
+Some small improvements on the guide...
+
+Running installation on demand::
+Node artifacts (binaries and packages) are already cached locally and `frontend-maven-plugin` takes care of it, but we can improve the build time avoiding the installation steps in a normal build.
+We can wrap the `frontend-maven-plugin` configuration in a profile, for example called `install-deps`, and run int under demand with
+
+ $ mvn -Pinstall-deps initialize
+
+[NOTE]
+====
+* Node distribution zips are cached in _$M2_REPO/com/github/eirslett/node/_.
+* npm packages, are cache in $HOME/.npm. Which is how npm command normally works.
+====
+
+Cleaning temporal directories::
+After a full build we will end up with three extra folders in our project _node_, _node_modules_ and _build_.
+If we want to delete all installation and site folders, we just need to set additional _filesets_ to `maven-clean-plugin` configuration.
++
+[source, xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-clean-plugin</artifactId>
+  <version>3.1.0</version>
+  <configuration>
+    <filesets>
+      <fileset>
+        <directory>node</directory> <!--.-->
+        <followSymlinks>false</followSymlinks>
+      </fileset>
+      <fileset>
+        <directory>node_modules</directory> <!--.-->
+        <followSymlinks>false</followSymlinks>
+      </fileset>
+      <fileset>
+        <directory>build</directory> <!--.-->
+        <followSymlinks>false</followSymlinks>
+      </fileset>
+    </filesets>
+  </configuration>
+</plugin>
+----
+<.> Node and npm installation folder
+<.> Node packages installation folder
+<.> Antora output directory
++
+If we wanted to only delete some when we need to, the same profile approach as before could be applied.
+
+Customizing build directory::
+Storing the generated site in the root of our project is not very "maven-like".
+Luckily Antora allows to change that through https://docs.antora.org/antora/{antora-version}/playbook/configure-output/[output options].
++
+Simplest way is to add `--to-dir` argument to exec plugin, but check the docs to see what other options are there.
++
+[source, xml]
+----
+<configuration>
+  <executable>node/node</executable>
+  <arguments>
+    <argument>node_modules/.bin/antora</argument>
+    <argument>antora-playbook.yml</argument>
+    <argument>--to-dir=target/site</argument> <!--.-->
+  </arguments>
+</configuration>
+----
+<.> Set antora output inside's maven's _target_.
+
+Custom maven lyfecycle::
+Just a side note.
+A common theme when using maven vs task oriented building tools is that we cannot simply run what we need.
+Instead, we add plugins to specific phases while all other defaults still run (validations, resources, processing, java compiling, etc.).
++
+In this guide we minimized this by setting the plugins to early phases (`initialize`, `compile`), but is not perfect.
+If we want 100% control we can define a custom maven lifecycle with only what we need.
+This will require creating an XML descriptor in another module.
+
+[NOTE]
+====
+I couldn't find any official reference, so here is a complete example I use as reference from time to time
+https://github.com/asciidoctor-lifecycle-maven/asciidoctor-lifecycle-maven-plugin/blob/master/src/main/resources/META-INF/plexus/components.xml[asciidoctor-lifecycle-maven-plugin].
+====
+
+_I hope it helps!!_
+
+_Abel_
+
+_Currently listening to "Deadhead" by Devin Townsend_
