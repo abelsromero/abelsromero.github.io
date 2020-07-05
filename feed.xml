@@ -6,14 +6,478 @@
     <atom:link href="http://abelsromero.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>Mashing the Keyboad, blog by Abel Salgado Romero</description>
     <language>en-gb</language>
-    <pubDate>jue, 13 ago 2015 21:38:13 +0200</pubDate>
-    <lastBuildDate>jue, 13 ago 2015 21:38:13 +0200</lastBuildDate>
+    <pubDate>Sun, 5 Jul 2020 21:04:57 +0200</pubDate>
+    <lastBuildDate>Sun, 5 Jul 2020 21:04:57 +0200</lastBuildDate>
 
     <item>
+      <title>Building Antora with Maven</title>
+      <link>http://abelsromero.github.io/blog/2020/antora-with-maven.html</link>
+      <pubDate>Mon, 6 Jul 2020 00:00:00 +0200</pubDate>
+      <guid isPermaLink="false">blog/2020/antora-with-maven.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://antora.org/&quot;&gt;Antora&lt;/a&gt; is a great documentation building solution for &lt;a href=&quot;https://asciidoctor.org/&quot;&gt;Asciidoctor&lt;/a&gt;.
+Amongst its greatest innovations are the standardization of the different resources to build really good docs,
+and the orchestration of multiple independent repositories into a single published site.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, it&amp;#8217;s fully implements in JavaScript.
+This is not a bad thing at all, but may present an initial barrier for those used to enjoying Asciidoctor in Ruby or Java.
+This guide will show how to set up a simple Maven build an Antora site.
+It&amp;#8217;s in fact, an alternative way to run the official &lt;a href=&quot;https://docs.antora.org/antora/2.3/install-and-run-quickstart/&quot;&gt;install-and-run-quickstart&lt;/a&gt;.
+Spoiler alert, it&amp;#8217;s just using a couple of popular Maven plugins ;)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Full example can be found here &lt;a href=&quot;https://github.com/abelsromero/blog-antora-with-maven&quot; class=&quot;bare&quot;&gt;https://github.com/abelsromero/blog-antora-with-maven&lt;/a&gt;.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;antora_with_mavenwhy&quot;&gt;Antora with Maven&amp;#8230;&amp;#8203;why?&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Antora itself is implemented in JavaScript and uses &lt;a href=&quot;https://nodejs.org/&quot;&gt;Node.js&lt;/a&gt; to run.
+But we don&amp;#8217;t really need to know about it, &lt;a href=&quot;https://docs.antora.org/antora/2.3/install/install-antora/&quot;&gt;installation&lt;/a&gt; is easy and normally we interact with Antora&amp;#8217;s CLI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, if like me&amp;#8230;&amp;#8203;you come from a Java background and don&amp;#8217;t like installing tools globally, this short guide shows how to build an Antora site with existing &lt;a href=&quot;https://maven.apache.org/&quot;&gt;Maven&lt;/a&gt; tools.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This guide does not cover all use cases, at the end there&amp;#8217;s a section of further work.
+But it offers a quickstart.
+It also offers a self-contained way to setup a reproducible environment and build that could be used for CI environments.
+What I like to call &quot;just clone &amp;amp; package&quot; processes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The goal is not retract from using plain Antora but making things easier to start.
+I hope after getting your feet wet, you&amp;#8217;ll give it a try using the stardard toolset.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The process is split in 2 main parts:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Bootstrapping the project from zero.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Configuring maven to install Node and the antora packages.
+&lt;em&gt;packages&lt;/em&gt; is Node terminology for modules or libraries in Java world.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Getting Maven to run the antora cli to build the site.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;bootstrapping_the_project&quot;&gt;Bootstrapping the project&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This guide uses the &lt;a href=&quot;https://docs.antora.org/antora/2.3/install-and-run-quickstart/&quot;&gt;install-and-run-quickstart&lt;/a&gt;.
+If we review it we&amp;#8217;ll see that the example Antora project is composed of 3 repos&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The playbook describes where the contents are located, the UI theme and main options.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;2 content repos with the documentation sources to be converted into the site&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://gitlab.com/antora/demo/demo-component-a&quot; class=&quot;bare&quot;&gt;https://gitlab.com/antora/demo/demo-component-a&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://gitlab.com/antora/demo/demo-component-b.git&quot; class=&quot;bare&quot;&gt;https://gitlab.com/antora/demo/demo-component-b.git&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In order to build the site we only need to create a maven project and add the playbook file.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The quickest way is using a maven &lt;code&gt;maven-archetype-quickstart&lt;/code&gt; as described in &lt;a href=&quot;http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html&quot;&gt;maven-in-five-minutes&lt;/a&gt; guide.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;$ mvn archetype:generate -DgroupId=org.antora.maven -DartifactId=my-antora-site -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once done, copy the example playbook from &lt;a href=&quot;https://gitlab.com/antora/demo/docs-site/-/blob/master/antora-playbook.yml&quot; class=&quot;bare&quot;&gt;https://gitlab.com/antora/demo/docs-site/-/blob/master/antora-playbook.yml&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;yaml&quot; class=&quot;language-yaml hljs&quot;&gt;site:
+  title: Antora Demo Site
+  # the 404 page and sitemap files only get generated when the url property is set
+  url: https://antora.gitlab.io/demo/docs-site
+  start_page: component-b::index.adoc
+content:
+  sources:
+    - url: https://gitlab.com/antora/demo/demo-component-a.git
+      branches: master
+      # setting edit_url to false disables the Edit this Page link for any page that originates from this repository
+      # the same thing can be achieved by adding empty credentials (i.e., @) in front of the domain in the URL
+      edit_url: false
+    - url: https://gitlab.com/antora/demo/demo-component-b.git
+      branches: [v2.0, v1.0]
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And we are done for the first step!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;installing_node_npm_and_antora&quot;&gt;Installing Node, npm and Antora&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we need the local Node installation and the dependencies.
+That&amp;#8217;s extremely easy using &lt;a href=&quot;https://github.com/eirslett/frontend-maven-plugin&quot;&gt;frontend-maven-plugin&lt;/a&gt;.
+This allows running several Javascript tools from Maven, handling also the installation of such tools as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;All is done inside your project folder, so no need to install anything in your machine.
+And when you are done, you can delete it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To setup the installation just add the plugin with two executions.
+One, to install Node and npm versions you want to use (Antora works better with latest LTS).
+THe other, to install Antora and its dependencies.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s important to keep the order in the pom.xml since both executions run in the same &lt;a href=&quot;http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#lifecycle-reference&quot;&gt;maven phase&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;xml&quot; class=&quot;language-xml hljs&quot;&gt;&amp;lt;plugin&amp;gt;
+  &amp;lt;groupId&amp;gt;com.github.eirslett&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;frontend-maven-plugin&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;1.10.0&amp;lt;/version&amp;gt;
+  &amp;lt;executions&amp;gt;
+    &amp;lt;execution&amp;gt;
+      &amp;lt;id&amp;gt;install node and npm&amp;lt;/id&amp;gt;
+      &amp;lt;goals&amp;gt;
+        &amp;lt;goal&amp;gt;install-node-and-npm&amp;lt;/goal&amp;gt;
+      &amp;lt;/goals&amp;gt;
+      &amp;lt;phase&amp;gt;initialize&amp;lt;/phase&amp;gt;
+      &amp;lt;configuration&amp;gt;
+        &amp;lt;nodeVersion&amp;gt;${node.version}&amp;lt;/nodeVersion&amp;gt;  &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+        &amp;lt;npmVersion&amp;gt;${npm.version}&amp;lt;/npmVersion&amp;gt;     &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+      &amp;lt;/configuration&amp;gt;
+    &amp;lt;/execution&amp;gt;
+    &amp;lt;execution&amp;gt;
+      &amp;lt;id&amp;gt;npm install antora&amp;lt;/id&amp;gt;
+      &amp;lt;goals&amp;gt;
+        &amp;lt;goal&amp;gt;npm&amp;lt;/goal&amp;gt;
+      &amp;lt;/goals&amp;gt;
+      &amp;lt;phase&amp;gt;initialize&amp;lt;/phase&amp;gt;
+      &amp;lt;configuration&amp;gt;
+        &amp;lt;arguments&amp;gt;install @antora/cli@${antora.version} @antora/site-generator-default@${antora.version}&amp;lt;/arguments&amp;gt; &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+      &amp;lt;/configuration&amp;gt;
+    &amp;lt;/execution&amp;gt;
+  &amp;lt;/executions&amp;gt;
+&amp;lt;/plugin&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Fixed Node version as maven property.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Fixed npm version as maven property.
+A conventional Node installation includes npm, but here it&amp;#8217;s required to it separately.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Npm command to install Antora and the default site generator (aka. style).
+To install the latest version leave it as &lt;code&gt;install @antora/cli @antora/site-generator-default&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Alternatively, for the dependencies installation we can create a npm &lt;a href=&quot;https://docs.npmjs.com/files/package.json&quot;&gt;packages.json descriptor&lt;/a&gt; and set &lt;code&gt;&amp;lt;arguments&amp;gt;install&amp;lt;/arguments&amp;gt;&lt;/code&gt;.
+But this makes it harder to keep all configuration in a single file.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock important&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Important&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After a first installation, the file &lt;code&gt;package-lock.json&lt;/code&gt; will be created with the exact version of all dependencies (direct and transitive).
+For the case of Antora is safe to ignore it and not pushing it into your git repo.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Finally, to have a controlled build we can define all versions as properties.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;xml&quot; class=&quot;language-xml hljs&quot;&gt;&amp;lt;properties&amp;gt;
+  &amp;lt;node.version&amp;gt;v12.18.2&amp;lt;/node.version&amp;gt;
+  &amp;lt;npm.version&amp;gt;6.14.5&amp;lt;/npm.version&amp;gt;
+  &amp;lt;antora.version&amp;gt;2.3.3&amp;lt;/antora.version&amp;gt;
+&amp;lt;/properties&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;generating_the_site&quot;&gt;Generating the site&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The only thing remaining is building the site.
+In a normal &lt;a href=&quot;https://docs.antora.org/antora/2.3/install/install-antora/#install-dir&quot;&gt;installation&lt;/a&gt; here would just run Antora&amp;#8217;s cli.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;$ antora antora-playbook.yml&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here, we can use the &lt;a href=&quot;https://www.mojohaus.org/exec-maven-plugin/&quot;&gt;exec-maven-plugin&lt;/a&gt; to run the same command.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;xml&quot; class=&quot;language-xml hljs&quot;&gt;&amp;lt;plugin&amp;gt;
+  &amp;lt;groupId&amp;gt;org.codehaus.mojo&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;exec-maven-plugin&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;3.0.0&amp;lt;/version&amp;gt;
+  &amp;lt;executions&amp;gt;
+    &amp;lt;execution&amp;gt;
+      &amp;lt;goals&amp;gt;
+        &amp;lt;goal&amp;gt;exec&amp;lt;/goal&amp;gt;
+      &amp;lt;/goals&amp;gt;
+      &amp;lt;phase&amp;gt;compile&amp;lt;/phase&amp;gt;
+      &amp;lt;configuration&amp;gt;
+        &amp;lt;!-- If we don&apos;t want to depend on default node installation path we can use --&amp;gt;
+        &amp;lt;executable&amp;gt;node/node&amp;lt;/executable&amp;gt; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+        &amp;lt;arguments&amp;gt;
+          &amp;lt;argument&amp;gt;node_modules/.bin/antora&amp;lt;/argument&amp;gt; &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+          &amp;lt;argument&amp;gt;antora-playbook.yml&amp;lt;/argument&amp;gt; &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+        &amp;lt;/arguments&amp;gt;
+      &amp;lt;/configuration&amp;gt;
+    &amp;lt;/execution&amp;gt;
+  &amp;lt;/executions&amp;gt;
+&amp;lt;/plugin&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;em&gt;node&lt;/em&gt; binary is installed by default in &lt;em&gt;node&lt;/em&gt; folder.
+To change that, we could use a maven property and set &lt;code&gt;&amp;lt;installDirectory&amp;gt;&lt;/code&gt; during the installation execution.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Packages with executable commands like antora are available under &lt;em&gt;.bin&lt;/em&gt; directory of the packages installation folder.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Antora playbook descriptor file located at the root of the project.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With that, we complete the configuration!
+To build the site we only run&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;$ mvn compile&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;some_extras&quot;&gt;Some extras&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Some small improvements on the guide&amp;#8230;&amp;#8203;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;dlist&quot;&gt;
+&lt;dl&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Running installation on demand&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;Node artifacts (binaries and packages) are already cached locally and &lt;code&gt;frontend-maven-plugin&lt;/code&gt; takes care of it, but we can improve the build time avoiding the installation steps in a normal build.
+We can wrap the &lt;code&gt;frontend-maven-plugin&lt;/code&gt; configuration in a profile, for example called &lt;code&gt;install-deps&lt;/code&gt;, and run int under demand with&lt;/p&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;$ mvn -Pinstall-deps initialize&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Node distribution zips are cached in &lt;em&gt;$M2_REPO/com/github/eirslett/node/&lt;/em&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;npm packages, are cache in $HOME/.npm. Which is how npm command normally works.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;dlist&quot;&gt;
+&lt;dl&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Cleaning temporal directories&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;After a full build we will end up with three extra folders in our project &lt;em&gt;node&lt;/em&gt;, &lt;em&gt;node_modules&lt;/em&gt; and &lt;em&gt;build&lt;/em&gt;.
+If we want to delete all installation and site folders, we just need to set additional &lt;em&gt;filesets&lt;/em&gt; to &lt;code&gt;maven-clean-plugin&lt;/code&gt; configuration.&lt;/p&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;xml&quot; class=&quot;language-xml hljs&quot;&gt;&amp;lt;plugin&amp;gt;
+  &amp;lt;groupId&amp;gt;org.apache.maven.plugins&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;maven-clean-plugin&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;3.1.0&amp;lt;/version&amp;gt;
+  &amp;lt;configuration&amp;gt;
+    &amp;lt;filesets&amp;gt;
+      &amp;lt;fileset&amp;gt;
+        &amp;lt;directory&amp;gt;node&amp;lt;/directory&amp;gt; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+        &amp;lt;followSymlinks&amp;gt;false&amp;lt;/followSymlinks&amp;gt;
+      &amp;lt;/fileset&amp;gt;
+      &amp;lt;fileset&amp;gt;
+        &amp;lt;directory&amp;gt;node_modules&amp;lt;/directory&amp;gt; &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+        &amp;lt;followSymlinks&amp;gt;false&amp;lt;/followSymlinks&amp;gt;
+      &amp;lt;/fileset&amp;gt;
+      &amp;lt;fileset&amp;gt;
+        &amp;lt;directory&amp;gt;build&amp;lt;/directory&amp;gt; &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+        &amp;lt;followSymlinks&amp;gt;false&amp;lt;/followSymlinks&amp;gt;
+      &amp;lt;/fileset&amp;gt;
+    &amp;lt;/filesets&amp;gt;
+  &amp;lt;/configuration&amp;gt;
+&amp;lt;/plugin&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Node and npm installation folder&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Node packages installation folder&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Antora output directory&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If we wanted to only delete some when we need to, the same profile approach as before could be applied.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/dd&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Customizing build directory&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;Storing the generated site in the root of our project is not very &quot;maven-like&quot;.
+Luckily Antora allows to change that through &lt;a href=&quot;https://docs.antora.org/antora/2.3/playbook/configure-output/&quot;&gt;output options&lt;/a&gt;.&lt;/p&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Simplest way is to add &lt;code&gt;--to-dir&lt;/code&gt; argument to exec plugin, but check the docs to see what other options are there.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;xml&quot; class=&quot;language-xml hljs&quot;&gt;&amp;lt;configuration&amp;gt;
+  &amp;lt;executable&amp;gt;node/node&amp;lt;/executable&amp;gt;
+  &amp;lt;arguments&amp;gt;
+    &amp;lt;argument&amp;gt;node_modules/.bin/antora&amp;lt;/argument&amp;gt;
+    &amp;lt;argument&amp;gt;antora-playbook.yml&amp;lt;/argument&amp;gt;
+    &amp;lt;argument&amp;gt;--to-dir=target/site&amp;lt;/argument&amp;gt; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+  &amp;lt;/arguments&amp;gt;
+&amp;lt;/configuration&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Set antora output inside&amp;#8217;s maven&amp;#8217;s &lt;em&gt;target&lt;/em&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/dd&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Custom maven lyfecycle&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;Just a side note.
+A common theme when using maven vs task oriented building tools is that we cannot simply run what we need.
+Instead, we add plugins to specific phases while all other defaults still run (validations, resources, processing, java compiling, etc.).&lt;/p&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this guide we minimized this by setting the plugins to early phases (&lt;code&gt;initialize&lt;/code&gt;, &lt;code&gt;compile&lt;/code&gt;), but is not perfect.
+If we want 100% control we can define a custom maven lifecycle with only what we need.
+This will require creating an XML descriptor in another module.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I couldn&amp;#8217;t find any official reference, so here is a complete example I use as reference from time to time
+&lt;a href=&quot;https://github.com/asciidoctor-lifecycle-maven/asciidoctor-lifecycle-maven-plugin/blob/master/src/main/resources/META-INF/plexus/components.xml&quot;&gt;asciidoctor-lifecycle-maven-plugin&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;I hope it helps!!&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;Abel&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;Currently listening to &quot;Deadhead&quot; by Devin Townsend&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
+    <item>
       <title>Making an EAR an a WAR coexist in Gradle (almost) effortlessly</title>
-      <link>http://abelsromero.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html</link>
-      <pubDate>jue, 13 ago 2015 00:00:00 +0200</pubDate>
-      <guid isPermaLink="false">blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-(almost)-effortlessly.html</guid>
+      <link>http://abelsromero.github.io/blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-effortlessly.html</link>
+      <pubDate>Thu, 13 Aug 2015 00:00:00 +0200</pubDate>
+      <guid isPermaLink="false">blog/2015/Making-an-EAR-an-a-WAR-coexist-in-Gradle-effortlessly.html</guid>
       	<description>
 	&lt;div id=&quot;preamble&quot;&gt;
 &lt;div class=&quot;sectionbody&quot;&gt;
@@ -38,7 +502,7 @@ To make things clear, this is not a Gradle vs Maven post, or any sort of Maven r
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class=&quot;sect1&quot;&gt;
-&lt;h2 id=&quot;some_context_an_ear_now&quot;&gt;Some context&amp;#8230;&amp;#8203;an EAR now?&lt;/h2&gt;
+&lt;h2 id=&quot;some_contextan_ear_now&quot;&gt;Some context&amp;#8230;&amp;#8203;an EAR now?&lt;/h2&gt;
 &lt;div class=&quot;sectionbody&quot;&gt;
 &lt;div class=&quot;paragraph&quot;&gt;
 &lt;p&gt;In the time of lightweight containers and applications seems that big packages are dead.&lt;/p&gt;
@@ -62,7 +526,7 @@ To make things clear, this is not a Gradle vs Maven post, or any sort of Maven r
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class=&quot;sect1&quot;&gt;
-&lt;h2 id=&quot;it_shouldn_t_be_that_hard&quot;&gt;It shouldn&amp;#8217;t be that hard&lt;/h2&gt;
+&lt;h2 id=&quot;it_shouldnt_be_that_hard&quot;&gt;It shouldn&amp;#8217;t be that hard&lt;/h2&gt;
 &lt;div class=&quot;sectionbody&quot;&gt;
 &lt;div class=&quot;paragraph&quot;&gt;
 &lt;p&gt;Wrapping a WAR should not be hard, it&amp;#8217;s just adding some extra XML and pack the file, right?
@@ -102,11 +566,11 @@ Just add the following lines to your current Gradle files.&lt;/p&gt;
 &lt;div class=&quot;listingblock&quot;&gt;
 &lt;div class=&quot;title&quot;&gt;build.gradle&lt;/div&gt;
 &lt;div class=&quot;content&quot;&gt;
-&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code class=&quot;language-gradle&quot; data-lang=&quot;gradle&quot;&gt;project(&quot;:earproject&quot;) {
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;gradle&quot; class=&quot;language-gradle hljs&quot;&gt;project(&quot;:earproject&quot;) {
   apply plugin: &apos;ear&apos;
 
   dependencies {
-    deploy project(path:&quot;:&quot;, configuration:&apos;archives&apos;) &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+    deploy project(path:&quot;:&quot;, configuration:&apos;archives&apos;) // &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
   }
 }&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
@@ -133,7 +597,7 @@ Just add the following lines to your current Gradle files.&lt;/p&gt;
 &lt;div class=&quot;listingblock&quot;&gt;
 &lt;div class=&quot;title&quot;&gt;settings.gradle&lt;/div&gt;
 &lt;div class=&quot;content&quot;&gt;
-&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code class=&quot;language-groovy&quot; data-lang=&quot;groovy&quot;&gt;include &apos;earproject&apos; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;groovy&quot; class=&quot;language-groovy hljs&quot;&gt;include &apos;earproject&apos; // &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div class=&quot;colist arabic&quot;&gt;
@@ -153,7 +617,7 @@ The clean task is optional, but I always like to make sure builds run from zero.
 &lt;div class=&quot;listingblock&quot;&gt;
 &lt;div class=&quot;title&quot;&gt;&apos;gradle clean build&apos; output&lt;/div&gt;
 &lt;div class=&quot;content&quot;&gt;
-&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;:clean
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;ruby&quot; class=&quot;language-ruby hljs&quot;&gt;:clean
 :earproject:clean
 :compileJava
 :processResources
@@ -200,11 +664,11 @@ The clean task is optional, but I always like to make sure builds run from zero.
 &lt;/div&gt;
 &lt;div class=&quot;listingblock&quot;&gt;
 &lt;div class=&quot;content&quot;&gt;
-&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code class=&quot;language-gradle&quot; data-lang=&quot;gradle&quot;&gt;ear {
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;gradle&quot; class=&quot;language-gradle hljs&quot;&gt;ear {
   deploymentDescriptor {
     applicationName = &quot;YOUR APP NAME&quot;
     displayName = &quot;YOUR APP DISPLAY NAME&quot;
-    webModule(rootProject.configurations[&apos;archives&apos;].artifacts[0].file.name, &quot;/YOUR_CONTEXT_ROOT&quot;) &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+    webModule(rootProject.configurations[&apos;archives&apos;].artifacts[0].file.name, &quot;/YOUR_CONTEXT_ROOT&quot;) // &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
   }
 }&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
@@ -228,14 +692,14 @@ The clean task is optional, but I always like to make sure builds run from zero.
 &lt;div class=&quot;listingblock&quot;&gt;
 &lt;div class=&quot;title&quot;&gt;build.gradle&lt;/div&gt;
 &lt;div class=&quot;content&quot;&gt;
-&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code class=&quot;language-gradle&quot; data-lang=&quot;gradle&quot;&gt;project(&quot;:earproject&quot;) {
+&lt;pre class=&quot;highlightjs highlight&quot;&gt;&lt;code data-lang=&quot;gradle&quot; class=&quot;language-gradle hljs&quot;&gt;project(&quot;:earproject&quot;) {
   apply plugin: &apos;ear&apos;
 
-  project.version = rootProject.version   &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
-  project.buildDir = rootProject.buildDir &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+  project.version = rootProject.version   // &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+  project.buildDir = rootProject.buildDir // &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
 
   ear {
-    baseName = rootProject.name           &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+    baseName = rootProject.name           // &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
     deploymentDescriptor {
     . . .
   }&lt;/code&gt;&lt;/pre&gt;

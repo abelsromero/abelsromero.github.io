@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Building Antora with Maven</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <link href="../../css/personal.css" rel="stylesheet">
+    <!-- Le styles -->
+    <link href="../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <!-- highlightjs -->
+    <link href="../../css/default.css" rel="stylesheet">
+
+    <!--
+    <link href="../../css/prettify.css" rel="stylesheet">
+-->
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../favicon.ico">
+  </head>
+  <body onload="prettyPrint()">
+    <div id="wrap">
+
+	<!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">Mashing the Keyboard</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="../../index.html">Home</a></li>
+            <li><a href="../../about.html">About</a></li>
+						<li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Tags<b class="caret"></b></a>
+              <ul class="dropdown-menu">
+									<li><a href="../../tags/Building.html">Building</a></li>
+									<li><a href="../../tags/Maven.html">Maven</a></li>
+									<li><a href="../../tags/JavaEE.html">JavaEE</a></li>
+									<li><a href="../../tags/Antora.html">Antora</a></li>
+									<li><a href="../../tags/Gradle.html">Gradle</a></li>
+									<li><a href="../../tags/Asciidoctor.html">Asciidoctor</a></li>
+              </ul>
+            </li>
+						<li><a href="../../archive.html">Archive</a></p></li>
+            <li><a href="../../feed.xml">Subscribe</a></li>
+						<!--
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>
+              </ul>
+            </li>
+						-->
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    <div class="container">
+
+	<div class="page-header">
+		<h1>Building Antora with Maven</h1>
+	</div>
+
+	<p><em>06 July 2020</em></p>
+
+	<a href="https://twitter.com/share" class="twitter-share-button" data-url="https://robertpanzer.github.io/blog/2020/antora-with-maven.html">Tweet</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+
+	<g:plusone href="https://abelsromero.github.io/blog/2020/antora-with-maven.html"></g:plusone>
+
+	<script type="IN/Share" data-url="https://abelsromero.github.io/blog/2020/antora-with-maven.html" data-counter="right"></script>
+
+	<div class="fb-like" data-href="https://abelsromero.github.io/blog/2020/antora-with-maven.html" data-layout="button_count" data-action="like" data-show-faces="true" data-share="true"></div>
+
+	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://antora.org/">Antora</a> is a great documentation building solution for <a href="https://asciidoctor.org/">Asciidoctor</a>.
+Amongst its greatest innovations are the standardization of the different resources to build really good docs,
+and the orchestration of multiple independent repositories into a single published site.</p>
+</div>
+<div class="paragraph">
+<p>However, it&#8217;s fully implements in JavaScript.
+This is not a bad thing at all, but may present an initial barrier for those used to enjoying Asciidoctor in Ruby or Java.
+This guide will show how to set up a simple Maven build an Antora site.
+It&#8217;s in fact, an alternative way to run the official <a href="https://docs.antora.org/antora/2.3/install-and-run-quickstart/">install-and-run-quickstart</a>.
+Spoiler alert, it&#8217;s just using a couple of popular Maven plugins ;)</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Full example can be found here <a href="https://github.com/abelsromero/blog-antora-with-maven" class="bare">https://github.com/abelsromero/blog-antora-with-maven</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="antora_with_mavenwhy">Antora with Maven&#8230;&#8203;why?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Antora itself is implemented in JavaScript and uses <a href="https://nodejs.org/">Node.js</a> to run.
+But we don&#8217;t really need to know about it, <a href="https://docs.antora.org/antora/2.3/install/install-antora/">installation</a> is easy and normally we interact with Antora&#8217;s CLI.</p>
+</div>
+<div class="paragraph">
+<p>However, if like me&#8230;&#8203;you come from a Java background and don&#8217;t like installing tools globally, this short guide shows how to build an Antora site with existing <a href="https://maven.apache.org/">Maven</a> tools.</p>
+</div>
+<div class="paragraph">
+<p>This guide does not cover all use cases, at the end there&#8217;s a section of further work.
+But it offers a quickstart.
+It also offers a self-contained way to setup a reproducible environment and build that could be used for CI environments.
+What I like to call "just clone &amp; package" processes.</p>
+</div>
+<div class="paragraph">
+<p>The goal is not retract from using plain Antora but making things easier to start.
+I hope after getting your feet wet, you&#8217;ll give it a try using the stardard toolset.</p>
+</div>
+<div class="paragraph">
+<p>The process is split in 2 main parts:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Bootstrapping the project from zero.</p>
+</li>
+<li>
+<p>Configuring maven to install Node and the antora packages.
+<em>packages</em> is Node terminology for modules or libraries in Java world.</p>
+</li>
+<li>
+<p>Getting Maven to run the antora cli to build the site.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="bootstrapping_the_project">Bootstrapping the project</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This guide uses the <a href="https://docs.antora.org/antora/2.3/install-and-run-quickstart/">install-and-run-quickstart</a>.
+If we review it we&#8217;ll see that the example Antora project is composed of 3 repos</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The playbook describes where the contents are located, the UI theme and main options.</p>
+</li>
+<li>
+<p>2 content repos with the documentation sources to be converted into the site</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://gitlab.com/antora/demo/demo-component-a" class="bare">https://gitlab.com/antora/demo/demo-component-a</a></p>
+</li>
+<li>
+<p><a href="https://gitlab.com/antora/demo/demo-component-b.git" class="bare">https://gitlab.com/antora/demo/demo-component-b.git</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In order to build the site we only need to create a maven project and add the playbook file.</p>
+</div>
+<div class="paragraph">
+<p>The quickest way is using a maven <code>maven-archetype-quickstart</code> as described in <a href="http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html">maven-in-five-minutes</a> guide.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn archetype:generate -DgroupId=org.antora.maven -DartifactId=my-antora-site -DarchetypeArtifactId=maven-archetype-quickstart -DarchetypeVersion=1.4 -DinteractiveMode=false</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once done, copy the example playbook from <a href="https://gitlab.com/antora/demo/docs-site/-/blob/master/antora-playbook.yml" class="bare">https://gitlab.com/antora/demo/docs-site/-/blob/master/antora-playbook.yml</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="yaml" class="language-yaml hljs">site:
+  title: Antora Demo Site
+  # the 404 page and sitemap files only get generated when the url property is set
+  url: https://antora.gitlab.io/demo/docs-site
+  start_page: component-b::index.adoc
+content:
+  sources:
+    - url: https://gitlab.com/antora/demo/demo-component-a.git
+      branches: master
+      # setting edit_url to false disables the Edit this Page link for any page that originates from this repository
+      # the same thing can be achieved by adding empty credentials (i.e., @) in front of the domain in the URL
+      edit_url: false
+    - url: https://gitlab.com/antora/demo/demo-component-b.git
+      branches: [v2.0, v1.0]
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And we are done for the first step!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="installing_node_npm_and_antora">Installing Node, npm and Antora</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now we need the local Node installation and the dependencies.
+That&#8217;s extremely easy using <a href="https://github.com/eirslett/frontend-maven-plugin">frontend-maven-plugin</a>.
+This allows running several Javascript tools from Maven, handling also the installation of such tools as well.</p>
+</div>
+<div class="paragraph">
+<p>All is done inside your project folder, so no need to install anything in your machine.
+And when you are done, you can delete it.</p>
+</div>
+<div class="paragraph">
+<p>To setup the installation just add the plugin with two executions.
+One, to install Node and npm versions you want to use (Antora works better with latest LTS).
+THe other, to install Antora and its dependencies.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s important to keep the order in the pom.xml since both executions run in the same <a href="http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html#lifecycle-reference">maven phase</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;com.github.eirslett&lt;/groupId&gt;
+  &lt;artifactId&gt;frontend-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;1.10.0&lt;/version&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;id&gt;install node and npm&lt;/id&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;install-node-and-npm&lt;/goal&gt;
+      &lt;/goals&gt;
+      &lt;phase&gt;initialize&lt;/phase&gt;
+      &lt;configuration&gt;
+        &lt;nodeVersion&gt;${node.version}&lt;/nodeVersion&gt;  <b class="conum">(1)</b>
+        &lt;npmVersion&gt;${npm.version}&lt;/npmVersion&gt;     <b class="conum">(2)</b>
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+    &lt;execution&gt;
+      &lt;id&gt;npm install antora&lt;/id&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;npm&lt;/goal&gt;
+      &lt;/goals&gt;
+      &lt;phase&gt;initialize&lt;/phase&gt;
+      &lt;configuration&gt;
+        &lt;arguments&gt;install @antora/cli@${antora.version} @antora/site-generator-default@${antora.version}&lt;/arguments&gt; <b class="conum">(3)</b>
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Fixed Node version as maven property.</p>
+</li>
+<li>
+<p>Fixed npm version as maven property.
+A conventional Node installation includes npm, but here it&#8217;s required to it separately.</p>
+</li>
+<li>
+<p>Npm command to install Antora and the default site generator (aka. style).
+To install the latest version leave it as <code>install @antora/cli @antora/site-generator-default</code></p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Alternatively, for the dependencies installation we can create a npm <a href="https://docs.npmjs.com/files/package.json">packages.json descriptor</a> and set <code>&lt;arguments&gt;install&lt;/arguments&gt;</code>.
+But this makes it harder to keep all configuration in a single file.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>After a first installation, the file <code>package-lock.json</code> will be created with the exact version of all dependencies (direct and transitive).
+For the case of Antora is safe to ignore it and not pushing it into your git repo.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Finally, to have a controlled build we can define all versions as properties.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;properties&gt;
+  &lt;node.version&gt;v12.18.2&lt;/node.version&gt;
+  &lt;npm.version&gt;6.14.5&lt;/npm.version&gt;
+  &lt;antora.version&gt;2.3.3&lt;/antora.version&gt;
+&lt;/properties&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="generating_the_site">Generating the site</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The only thing remaining is building the site.
+In a normal <a href="https://docs.antora.org/antora/2.3/install/install-antora/#install-dir">installation</a> here would just run Antora&#8217;s cli.</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ antora antora-playbook.yml</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, we can use the <a href="https://www.mojohaus.org/exec-maven-plugin/">exec-maven-plugin</a> to run the same command.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;org.codehaus.mojo&lt;/groupId&gt;
+  &lt;artifactId&gt;exec-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;3.0.0&lt;/version&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;exec&lt;/goal&gt;
+      &lt;/goals&gt;
+      &lt;phase&gt;compile&lt;/phase&gt;
+      &lt;configuration&gt;
+        &lt;!-- If we don't want to depend on default node installation path we can use --&gt;
+        &lt;executable&gt;node/node&lt;/executable&gt; <b class="conum">(1)</b>
+        &lt;arguments&gt;
+          &lt;argument&gt;node_modules/.bin/antora&lt;/argument&gt; <b class="conum">(2)</b>
+          &lt;argument&gt;antora-playbook.yml&lt;/argument&gt; <b class="conum">(3)</b>
+        &lt;/arguments&gt;
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+  &lt;/executions&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p><em>node</em> binary is installed by default in <em>node</em> folder.
+To change that, we could use a maven property and set <code>&lt;installDirectory&gt;</code> during the installation execution.</p>
+</li>
+<li>
+<p>Packages with executable commands like antora are available under <em>.bin</em> directory of the packages installation folder.</p>
+</li>
+<li>
+<p>Antora playbook descriptor file located at the root of the project.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>With that, we complete the configuration!
+To build the site we only run</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn compile</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="some_extras">Some extras</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Some small improvements on the guide&#8230;&#8203;</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Running installation on demand</dt>
+<dd>
+<p>Node artifacts (binaries and packages) are already cached locally and <code>frontend-maven-plugin</code> takes care of it, but we can improve the build time avoiding the installation steps in a normal build.
+We can wrap the <code>frontend-maven-plugin</code> configuration in a profile, for example called <code>install-deps</code>, and run int under demand with</p>
+<div class="literalblock">
+<div class="content">
+<pre>$ mvn -Pinstall-deps initialize</pre>
+</div>
+</div>
+</dd>
+</dl>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Node distribution zips are cached in <em>$M2_REPO/com/github/eirslett/node/</em>.</p>
+</li>
+<li>
+<p>npm packages, are cache in $HOME/.npm. Which is how npm command normally works.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Cleaning temporal directories</dt>
+<dd>
+<p>After a full build we will end up with three extra folders in our project <em>node</em>, <em>node_modules</em> and <em>build</em>.
+If we want to delete all installation and site folders, we just need to set additional <em>filesets</em> to <code>maven-clean-plugin</code> configuration.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+  &lt;artifactId&gt;maven-clean-plugin&lt;/artifactId&gt;
+  &lt;version&gt;3.1.0&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;filesets&gt;
+      &lt;fileset&gt;
+        &lt;directory&gt;node&lt;/directory&gt; <b class="conum">(1)</b>
+        &lt;followSymlinks&gt;false&lt;/followSymlinks&gt;
+      &lt;/fileset&gt;
+      &lt;fileset&gt;
+        &lt;directory&gt;node_modules&lt;/directory&gt; <b class="conum">(2)</b>
+        &lt;followSymlinks&gt;false&lt;/followSymlinks&gt;
+      &lt;/fileset&gt;
+      &lt;fileset&gt;
+        &lt;directory&gt;build&lt;/directory&gt; <b class="conum">(3)</b>
+        &lt;followSymlinks&gt;false&lt;/followSymlinks&gt;
+      &lt;/fileset&gt;
+    &lt;/filesets&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Node and npm installation folder</p>
+</li>
+<li>
+<p>Node packages installation folder</p>
+</li>
+<li>
+<p>Antora output directory</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If we wanted to only delete some when we need to, the same profile approach as before could be applied.</p>
+</div>
+</dd>
+<dt class="hdlist1">Customizing build directory</dt>
+<dd>
+<p>Storing the generated site in the root of our project is not very "maven-like".
+Luckily Antora allows to change that through <a href="https://docs.antora.org/antora/2.3/playbook/configure-output/">output options</a>.</p>
+<div class="paragraph">
+<p>Simplest way is to add <code>--to-dir</code> argument to exec plugin, but check the docs to see what other options are there.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;configuration&gt;
+  &lt;executable&gt;node/node&lt;/executable&gt;
+  &lt;arguments&gt;
+    &lt;argument&gt;node_modules/.bin/antora&lt;/argument&gt;
+    &lt;argument&gt;antora-playbook.yml&lt;/argument&gt;
+    &lt;argument&gt;--to-dir=target/site&lt;/argument&gt; <b class="conum">(1)</b>
+  &lt;/arguments&gt;
+&lt;/configuration&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Set antora output inside&#8217;s maven&#8217;s <em>target</em>.</p>
+</li>
+</ol>
+</div>
+</dd>
+<dt class="hdlist1">Custom maven lyfecycle</dt>
+<dd>
+<p>Just a side note.
+A common theme when using maven vs task oriented building tools is that we cannot simply run what we need.
+Instead, we add plugins to specific phases while all other defaults still run (validations, resources, processing, java compiling, etc.).</p>
+<div class="paragraph">
+<p>In this guide we minimized this by setting the plugins to early phases (<code>initialize</code>, <code>compile</code>), but is not perfect.
+If we want 100% control we can define a custom maven lifecycle with only what we need.
+This will require creating an XML descriptor in another module.</p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>I couldn&#8217;t find any official reference, so here is a complete example I use as reference from time to time
+<a href="https://github.com/asciidoctor-lifecycle-maven/asciidoctor-lifecycle-maven-plugin/blob/master/src/main/resources/META-INF/plexus/components.xml">asciidoctor-lifecycle-maven-plugin</a>.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><em>I hope it helps!!</em></p>
+</div>
+<div class="paragraph">
+<p><em>Abel</em></p>
+</div>
+<div class="paragraph">
+<p><em>Currently listening to "Deadhead" by Devin Townsend</em></p>
+</div>
+</div>
+</div></p>
+
+		<div id="disqus_thread"></div>
+		<script type="text/javascript">
+				/* * * CONFIGURATION VARIABLES * * */
+				var disqus_shortname = 'abelcodeblog';
+
+				/* * * DON'T EDIT BELOW THIS LINE * * */
+				(function() {
+						var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+						dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+						(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+				})();
+		</script>
+		<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+	<hr />
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <div id="footer">
+      <div class="container">
+        <p class="muted credit">&copy; 2015 | Mixed with <a href="http://getbootstrap.com/">Bootstrap v3.1.1</a> | Baked with <a href="http://jbake.org">JBake v2.6.5</a></p>
+      </div>
+    </div>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="../../js/jquery-1.11.1.min.js"></script>
+    <script src="../../js/bootstrap.min.js"></script>
+		<script src="../../js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<!--
+    <script src="../../js/prettify.js"></script>
+    -->
+  </body>
+</html>
